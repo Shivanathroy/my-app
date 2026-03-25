@@ -1,29 +1,8 @@
-pipeline {
-    agent any
+pipeline:
+  agent: any
 
-    stages {
-        stage('Clone') {
-            steps {
-                echo "Cloning code..."
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo "Building..."
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo "Testing..."
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo "Deploying..."
-            }
-        }
-    }
-}
+  stages:
+    - stage: Build Docker Image
+      steps:
+        - echo: "Building Docker image..."
+        - sh: "docker build -t my-app:test ."

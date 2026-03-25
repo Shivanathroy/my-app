@@ -1,0 +1,56 @@
+# 🎯 CI/CD Pipeline: Build Docker on Git Push
+name: CI/CD - Docker Build
+
+# When to run this pipeline
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# Jobs to execute
+jobs:
+  build:
+    # Run on GitHub's Ubuntu runner
+    runs-on: ubuntu-latest
+
+    # Steps to execute
+    steps:
+      # Step 1: Get your code
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Show what we're building (debugging help)
+      - name: 🔍 Debug: Show files
+        run: |
+          echo "📁 Files in repo:"
+          ls -la
+          echo "📄 Dockerfile content:"
+          cat Dockerfile
+
+      # Step 3: Build Docker image
+      - name: 🐳 Build Docker Image
+        run: |
+          docker build -t my-app:ci-test .
+
+      # Step 4: Test the image works
+      - name: ✅ Test Docker Image
+        run: |
+          # Run container in background
+          docker run -d -p 80:80 --name test-run my-app:ci-test
+          
+          # Wait for nginx to start
+          sleep 5
+          
+          # Test with curl
+          echo "🔍 Testing container..."
+          curl -f http://localhost:80 || exit 1
+          
+          # Cleanup
+          docker stop test-run
+          docker rm test-run
+          echo "✅ Test passed!"
+
+      # Step 5: Success message
+      - name: 🎉 Pipeline Complete
+        run: echo "✅ CI Pipeline succeeded! Ready for CD."

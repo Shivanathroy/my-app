@@ -1,7 +1,9 @@
 pipeline:
-  agent: any
+  agent:
+    any: true
+
   stages:
-    - stages: Checkout
+    - name: Checkout
       steps:
-        - echo: "Step 1: Checking out code.."
-        - checkout: scm
+        - echo "Step 1: Checking out code..."
+        - checkout scm

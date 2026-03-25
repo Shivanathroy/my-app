@@ -2,13 +2,7 @@ pipeline:
   agent: any
 
   stages:
-    - stage: Checkout
+    - stage: Build Docker Image
       steps:
-        - echo: "Checking out code..."
-        - checkout: scm
-
-    - stage: Build
-      steps:
-        - echo: "Simulating build..."
-        - sh: "ls -l"
-        - sh: "echo 'Build complete!'"
+        - echo: "Building Docker image..."
+        - sh: "docker build -t my-app:test ."

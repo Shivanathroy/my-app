@@ -5,5 +5,4 @@ pipeline:
   stages:
     - name: Checkout
       steps:
-        - echo "Step 1: Checking out code..."
-        - checkout scm
+        - echo: "Step 1: Checking out code..."

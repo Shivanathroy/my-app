@@ -17,39 +17,50 @@ jobs:
         run: docker build -t my-app:${{ github.sha }} .
 
   deploy-dev:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     steps:
-      - name: Deploy to Dev
+      - name: Deploy to Dev on Oracle Host
         run: |
-          docker run --rm -d -p 8080:80 --name my-app-dev my-app:${{ github.sha }}
-          sleep 5
-          curl -f http://localhost:8080
-
+          ssh deploy@oracle-host "
+          docker pull my-app:${{ github.sha }} || true
+          docker stop my-app-dev || true
+          docker rm my-app-dev || true
+          docker run -d -p 8080:80 --name my-app-dev my-app:${{ github.sha }}
+          "
+          
   deploy-qa:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: deploy-dev
     steps:
-      - name: Deploy to QA
+      - name: Deploy to QA on Oracle Host
         run: |
-          docker run --rm -d -p 8081:80 --name my-app-qa my-app:${{ github.sha }}
-          sleep 5
-          curl -f http://localhost:8081
+          ssh deploy@oracle-host "
+          docker stop my-app-qa || true
+          docker rm my-app-qa || true
+          docker run -d -p 8081:80 --name my-app-qa my-app:${{ github.sha }}
+          "
 
   deploy-staging:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: deploy-qa
     steps:
-      - name: Deploy to Staging
+      - name: Deploy to Staging on Oracle Host
         run: |
-          docker run --rm -d -p 8082:80 --name my-app-staging my-app:${{ github.sha }}
-          sleep 5
-          curl -f http://localhost:8082
+          ssh deploy@oracle-host "
+          docker stop my-app-staging || true
+          docker rm my-app-staging || true
+          docker run -d -p 8082:80 --name my-app-staging my-app:${{ github.sha }}
+          "
 
   deploy-prod:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: deploy-staging
     steps:
-      - name: Deploy to Production
+      - name: Deploy to Production on Oracle Host
         run: |
-          docker run --rm -d -p 80:80 --name my-app-prod my-app:${{ github.sha }}
+          ssh deploy@oracle-host "
+          docker stop my-app-prod || true
+          docker rm my-app-prod || true
+          docker run -d -p 80:80 --name my-app-prod my-app:${{ github.sha }}
+          "

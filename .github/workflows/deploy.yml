@@ -20,7 +20,6 @@ jobs:
         echo "🔖 Commit : ${{ github.sha }}"
         echo "💬 Message: ${{ github.event.head_commit.message }}"
         echo "👤 Author : ${{ github.actor }}"
-        echo "📅 Time   : $(date)"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     - name: 🚀 Deploy to oracle-host
@@ -30,14 +29,12 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "📥 Pulling latest code..."
           cd ~/docker-work/my-app
           git pull origin main
 
           echo "🔨 Building Docker image..."
-          docker build -t my-app:${{ github.sha }} .
-          docker tag my-app:${{ github.sha }} my-app:latest
+          docker build -t my-app:latest .
 
           echo "🔄 Stopping old container..."
           docker stop my-app || true
@@ -59,7 +56,4 @@ jobs:
           echo "🧹 Cleaning old images..."
           docker image prune -f
 
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎉 Deployment Complete!"
-          echo "🌐 http://${{ secrets.SERVER_HOST }}"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

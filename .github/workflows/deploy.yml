@@ -22,38 +22,42 @@ jobs:
         echo "👤 Author : ${{ github.actor }}"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    - name: 🚀 Deploy to oracle-host
+    - name: 🚀 SSH into oracle-host and deploy
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          echo "📥 Pulling latest code..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📥 Step 1: Pull latest code..."
           cd ~/docker-work/my-app
           git pull origin main
 
-          echo "🔨 Building Docker image..."
+          echo "🔨 Step 2: Build image HERE on oracle-host..."
           docker build -t my-app:latest .
 
-          echo "🔄 Stopping old container..."
+          echo "🔄 Step 3: Stop old container..."
           docker stop my-app || true
           docker rm my-app || true
 
-          echo "🚀 Starting new container..."
+          echo "🚀 Step 4: Start new container..."
           docker run -d \
             -p 80:80 \
             --name my-app \
             --restart unless-stopped \
             my-app:latest
 
-          echo "⏳ Waiting for app to start..."
+          echo "⏳ Step 5: Wait for app..."
           sleep 5
 
-          echo "✅ Container status:"
+          echo "✅ Step 6: Check status..."
           docker ps | grep my-app
 
-          echo "🧹 Cleaning old images..."
+          echo "🧹 Step 7: Clean old images..."
           docker image prune -f
 
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎉 Deployment Complete!"
+          echo "🌐 App live on port 80!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

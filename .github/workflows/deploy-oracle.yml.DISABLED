@@ -1,13 +1,14 @@
+# .github/workflows/deploy-oracle.yml
 name: 🚀 Deploy to Oracle VM (Self-Hosted)
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Allow manual triggers
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
 
 jobs:
   deploy:
-    # 👇 KEY CHANGE: Run directly on your Oracle VM runner
+    # 👇 CRITICAL: Run on YOUR Oracle VM runner, NOT GitHub's cloud
     runs-on: [self-hosted, linux, arm64, docker]
     
     # Prevent concurrent deployments
@@ -69,3 +70,5 @@ jobs:
           docker image prune -f --filter "until=24h"
           
           echo "🎉 Deployment complete!"
+# Updated Sun Mar 29 11:01:50 IST 2026
+# Force refresh Sun Mar 29 11:07:29 IST 2026

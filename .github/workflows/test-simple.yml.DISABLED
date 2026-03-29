@@ -1,0 +1,10 @@
+name: 🧪 Simple Test
+
+on: [workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: [self-hosted, linux, arm64]
+    steps:
+      - name: Hello
+        run: echo "✅ Runner works! $(date)"

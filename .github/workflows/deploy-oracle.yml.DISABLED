@@ -1,0 +1,71 @@
+name: 🚀 Deploy to Oracle VM (Self-Hosted)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  deploy:
+    # 👇 KEY CHANGE: Run directly on your Oracle VM runner
+    runs-on: [self-hosted, linux, arm64, docker]
+    
+    # Prevent concurrent deployments
+    concurrency:
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📋 Deployment Context
+        run: |
+          echo "🔖 Commit: ${{ github.sha }}"
+          echo "👤 Actor: ${{ github.actor }}"
+          echo "🖥️ Runner Host: $(hostname)"
+          echo "👤 Running as: $(whoami)"
+          echo "📁 Workspace: $GITHUB_WORKSPACE"
+
+      - name: 🚀 Build & Deploy Application
+        run: |
+          # Target directory on Oracle VM
+          APP_DIR="/home/deploy/docker-work/my-app"
+          mkdir -p "$APP_DIR"
+          
+          # Sync code from checkout to target directory
+          rsync -av --delete --exclude='.git' "$GITHUB_WORKSPACE/" "$APP_DIR/"
+          cd "$APP_DIR"
+          
+          echo "🔨 Building Docker image..."
+          docker build -t my-app:latest .
+          
+          echo "🔄 Replacing running container..."
+          docker stop my-app 2>/dev/null || true
+          docker rm my-app 2>/dev/null || true
+          
+          docker run -d \
+            -p 80:80 \
+            --name my-app \
+            --restart unless-stopped \
+            my-app:latest
+          
+          echo "⏳ Waiting for app startup..."
+          sleep 5
+          
+          echo "✅ Verification:"
+          docker ps --filter "name=my-app" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          
+          # Health check
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80 || echo "000")
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+            echo "🌐 App responding: HTTP $HTTP_CODE"
+          else
+            echo "⚠️ App not responding yet (HTTP $HTTP_CODE)"
+            docker logs my-app --tail 20
+          fi
+          
+          echo "🧹 Cleaning old images..."
+          docker image prune -f --filter "until=24h"
+          
+          echo "🎉 Deployment complete!"

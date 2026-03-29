@@ -1,0 +1,19 @@
+name: ❤️ Keep Runner Active
+
+# Run every Sunday at midnight UTC + allow manual trigger
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  heartbeat:
+    runs-on: [self-hosted, Linux, ARM64]
+    steps:
+      - name: Ping GitHub
+        run: |
+          echo "✅ Runner alive: $(date)"
+          echo "Hostname: $(hostname)"
+          echo "Runner: oracle-host"
+          echo "Uptime: $(uptime)"
+          echo "Prevents 30-day auto-cleanup!"

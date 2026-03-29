@@ -7,23 +7,34 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted   # this will use Oracle VM runner
+    runs-on: ubuntu-latest
+
     steps:
+      # Step 1: Checkout code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup SSH Agent
+      # Step 2: Setup SSH agent
+      - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.ORACLE_SSH_KEY }}
 
+      # Step 3: Test SSH connection (optional)
       - name: Test SSH Connection
-        run: ssh -o StrictHostKeyChecking=no deploy@localhost "echo 'SSH OK'"
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.ORACLE_USER }}@${{ secrets.ORACLE_HOST }} "echo 'SSH OK'"
 
-      - name: Deploy App
-        run: |
-          cd ~/my-app
-          git pull origin main
-          docker compose down
-          docker compose up -d --build
-          docker ps -a
+      # Step 4: Deploy via SSH
+      - name: Deploy App on Oracle VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USER }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          port: 22
+          script: |
+            cd ~/my-app
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+            docker ps -a

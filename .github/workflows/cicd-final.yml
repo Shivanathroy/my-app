@@ -1,0 +1,29 @@
+name: 🎉 CI/CD Live
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    # ✅ Exact label match to your runner
+    runs-on: [self-hosted, Linux, ARM64]
+    # ✅ NO concurrency = no locks possible
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy
+        run: |
+          APP_DIR="/home/deploy/docker-work/my-app"
+          mkdir -p "$APP_DIR"
+          rsync -av --delete --exclude='.git' "$GITHUB_WORKSPACE/" "$APP_DIR/" 2>/dev/null || cp -r "$GITHUB_WORKSPACE"/* "$APP_DIR/"
+          cd "$APP_DIR"
+          [ ! -f Dockerfile ] && echo -e "FROM nginx:alpine\nCOPY index.html /usr/share/nginx/html/\nEXPOSE 80\nCMD [\"nginx\", \"-g\", \"daemon off;\"]" > Dockerfile
+          docker build -t my-app:latest .
+          docker stop my-app 2>/dev/null; docker rm my-app 2>/dev/null
+          docker run -d -p 80:80 --name my-app --restart unless-stopped my-app:latest
+          sleep 3
+          echo "✅ $(curl -s http://localhost:80 | grep -o '<title>.*</title>')"

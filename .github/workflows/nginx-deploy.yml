@@ -1,0 +1,26 @@
+name: NGINX Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted   # your Oracle runner
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Stop old container
+        run: |
+          docker stop nginx-app || true
+          docker rm nginx-app || true
+
+      - name: Build Docker Image
+        run: docker build -t my-nginx .
+
+      - name: Run NGINX Container
+        run: |
+          docker run -d -p 80:80 --name nginx-app my-nginx

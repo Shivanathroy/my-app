@@ -1,0 +1,33 @@
+name: 🧪 Test Self-Hosted Runner
+
+on: [workflow_dispatch]  # Manual trigger from GitHub UI
+
+jobs:
+  validate:
+    runs-on: [self-hosted, linux, arm64, docker]
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🖥️ Environment Report
+        run: |
+          echo "### 🖥️ Oracle VM Runner Report" >> $GITHUB_STEP_SUMMARY
+          echo "- 👤 User: $(whoami)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🖥️ Host: $(hostname)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏷️ Labels: ${{ join(runner.labels, ', ') }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐳 Docker: $(docker --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔧 Git: $(git --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📁 Workspace: $GITHUB_WORKSPACE" >> $GITHUB_STEP_SUMMARY
+          cat $GITHUB_STEP_SUMMARY
+
+      - name: 🐳 Docker Smoke Test
+        run: |
+          docker run --rm alpine:latest sh -c \
+            "echo '✅ Docker works on Oracle Linux 8 (aarch64)'"
+
+      - name: 📦 Build Test Artifact
+        run: |
+          echo "Build completed at $(date)" > build-info.txt
+          echo "Runner: $RUNNER_NAME" >> build-info.txt
+          cat build-info.txt

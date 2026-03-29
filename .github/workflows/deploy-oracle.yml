@@ -10,27 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout your repo
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup SSH agent with private key secret
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Test SSH Connection
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH OK'"
+      # 3️⃣ Add Oracle VM host to known_hosts
+      - name: Add Oracle VM to known_hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 600 ~/.ssh/known_hosts
 
-      - name: Deploy App on Oracle VM
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
+      # 4️⃣ Test SSH connection
+      - name: Test SSH Connection
+        run: ssh -v ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH Connection Successful'"
+
+      # 5️⃣ Deploy application on Oracle VM
+      - name: Deploy App
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            echo "Deploying my-app on Oracle VM..."
             cd ~/my-app
             git pull origin main
-            docker compose down
+            docker compose down || true
             docker compose up -d --build
             docker ps -a
+          EOF

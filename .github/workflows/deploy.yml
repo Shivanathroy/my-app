@@ -1,0 +1,32 @@
+name: 🚀 Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, ARM64]
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🚀 Deploy to Oracle VM
+        run: |
+          APP_DIR="/home/deploy/docker-work/my-app"
+          mkdir -p "$APP_DIR"
+          rsync -av --delete --exclude=".git" "$GITHUB_WORKSPACE/" "$APP_DIR/" 2>/dev/null || cp -r "$GITHUB_WORKSPACE"/* "$APP_DIR/"
+          cd "$APP_DIR"
+          if [ ! -f Dockerfile ]; then
+            echo "FROM nginx:alpine" > Dockerfile
+            echo "COPY index.html /usr/share/nginx/html/" >> Dockerfile
+            echo "EXPOSE 80" >> Dockerfile
+            echo 'CMD ["nginx", "-g", "daemon off;"]' >> Dockerfile
+          fi
+          docker build -t my-app:latest .
+          docker stop my-app 2>/dev/null; docker rm my-app 2>/dev/null
+          docker run -d -p 80:80 --name my-app --restart unless-stopped my-app:latest
+          sleep 5
+          curl -s http://localhost:80 | head -3

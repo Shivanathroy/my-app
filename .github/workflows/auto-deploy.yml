@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, linux, arm64, docker]
+    runs-on: [self-hosted, Linux, ARM64]
     # No concurrency block!
 
     steps:

@@ -1,0 +1,18 @@
+# .github/workflows/deploy-prod.yml
+name: 🚀 Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, ARM64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Oracle VM
+        run: |
+          # Deploy to production server
+          docker build -t my-app:latest .
+          docker run -d -p 80:80 --name my-app my-app:latest

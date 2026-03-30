@@ -1,31 +1,20 @@
-name: Full CI/CD Pipeline
+version: "3.8"
 
-on:
-  push:
-    branches: [main]
+services:
+  app:
+    build: .
+    container_name: my-app
+    restart: always
+    expose:
+      - "5000"  # internal port for NGINX to connect
 
-jobs:
-  deploy:
-    runs-on: self-hosted
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set APP_DIR
-        run: echo "APP_DIR=$PWD" >> $GITHUB_ENV
-
-      - name: Deploy with Docker Compose
-        run: |
-          cd $APP_DIR
-          docker-compose down --remove-orphans
-          docker-compose up -d --build
-          
-      - name: Wait for App
-        run: sleep 5
-
-      - name: Test Flask App
-        run: curl -f http://localhost:5000
-
-      - name: Test NGINX
-        run: curl -f http://localhost
+  nginx:
+    image: nginx:latest
+    container_name: my-nginx
+    restart: always
+    ports:
+      - "8080:80"  # host 8080 -> container 80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app

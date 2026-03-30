@@ -1,4 +1,4 @@
-name: Docker Compose CI/CD
+name: Full CI/CD Pipeline
 
 on:
   push:
@@ -10,17 +10,22 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Stop old containers
-        run: docker-compose down || true
+      - name: Set APP_DIR
+        run: echo "APP_DIR=$PWD" >> $GITHUB_ENV
 
-      - name: Build and Start Containers
-        run: docker-compose up -d --build
+      - name: Deploy with Docker Compose
+        run: |
+          cd $APP_DIR
+          docker-compose down --remove-orphans
+          docker-compose up -d --build
 
       - name: Wait for App
-        run: sleep 10
+        run: sleep 5
 
-      - name: Test Application
-        run: |
-          curl -f http://localhost || exit 1
+      - name: Test Flask App
+        run: curl -f http://localhost:5000
+
+      - name: Test NGINX
+        run: curl -f http://localhost

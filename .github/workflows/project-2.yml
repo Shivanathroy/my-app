@@ -1,0 +1,24 @@
+name: Project 2 - With Unit Tests
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: [self-hosted, oracle-vm, linux, arm64]
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Docker Image
+        run: docker build -t project2:latest .
+      
+      - name: Run Tests
+        run: docker run --rm project2:latest pytest tests.py -v
+      
+      - name: Run App
+        run: |
+          docker run -d -p 5000:5000 --name project2 project2:latest
+          sleep 2
+          curl http://localhost:5000
+          docker stop project2 || true

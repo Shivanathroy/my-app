@@ -9,7 +9,7 @@ services:
       - "5000"
 
   nginx:
-    image: nginx:latest
+    image: nginx:latest   # ✅ USE REAL NGINX IMAGE
     container_name: my-nginx
     restart: always
     ports:

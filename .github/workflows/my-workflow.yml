@@ -19,5 +19,7 @@ job:
            run: |
              curl http://localhost:5000
              curl http://localhost:5000/health
-        
+             
+      - name: Cleanup
+        run: docker stop project1 && docker rm project1
 

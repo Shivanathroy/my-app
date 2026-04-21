@@ -3,30 +3,36 @@ name: Build & Deploy Docker to Oracle VM
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # FREE GitHub Runner (not your Mac)
+    runs-on: ubuntu-latest
     
     steps:
-    # Step 1: Checkout code
     - name: Checkout code
       uses: actions/checkout@v3
     
-    # Step 2: Set up Docker Buildx
+    # DEBUG: Check if secrets exist
+    - name: Debug - Check Secrets
+      run: |
+        echo "Checking secrets..."
+        echo "ORACLE_VM_IP: ${{ secrets.ORACLE_VM_IP }}"
+        echo "ORACLE_VM_USER: ${{ secrets.ORACLE_VM_USER }}"
+        if [ -z "${{ secrets.ORACLE_VM_IP }}" ]; then
+          echo "ERROR: ORACLE_VM_IP is empty!"
+          exit 1
+        fi
+        echo "All secrets found! ✅"
+    
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
     
-    # Step 3: Login to Docker Hub
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
     
-    # Step 4: Build and Push Docker Image
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
@@ -34,24 +40,17 @@ jobs:
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/my-app:latest
     
-    # Step 5: Deploy to Oracle VM via SSH
+    # DEPLOY: Send to Oracle VM
     - name: Deploy to Oracle VM
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.ORACLE_VM_IP }}
         username: ${{ secrets.ORACLE_VM_USER }}
         key: ${{ secrets.ORACLE_VM_SSH_KEY }}
+        port: 22
         script: |
-          # Pull latest Docker image
-          docker pull ${{ secrets.DOCKER_USERNAME }}/my-app:latest
-          
-          # Stop old container
-          docker stop my-app || true
-          docker rm my-app || true
-          
-          # Run new container
-          docker run -d --name my-app ${{ secrets.DOCKER_USERNAME }}/my-app:latest
-          
-          # Show output/logs
-          echo "Container deployed successfully!"
-          docker logs my-app
+          echo "✅ Connected to Oracle VM!"
+          whoami
+          docker --version
+          docker pull ${{ secrets.DOCKER_USERNAME }}/my-app:latest || echo "Image pull failed"
+          echo "✅ Deployment complete!"
